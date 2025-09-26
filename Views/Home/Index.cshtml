@@ -1,0 +1,171 @@
+﻿@{
+    ViewData["Title"] = "AgroBazaar - Your Digital Marketplace";
+}
+
+<div class="text-center">
+    <h1 class="display-4 fw-bold">Welcome to AgroBazaar</h1>
+    <p class="lead mt-3 text-muted">
+        The Farmer-to-Consumer Marketplace — transparent, affordable, and empowering.
+    </p>
+
+    <div class="container mt-5">
+        <h2 class="h4 mb-4 text-success"><i class="fas fa-handshake"></i> What We Offer</h2>
+        <div class="row g-4">
+            <!-- Consumer Cards -->
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-0 rounded-3">
+                    <div class="card-body text-center">
+                        <i class="fas fa-tags fa-2x text-primary mb-3"></i>
+                        <h5 class="card-title">Cost Savings</h5>
+                        <p class="card-text">Enjoy better prices by buying directly from farmers.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-0 rounded-3">
+                    <div class="card-body text-center">
+                        <i class="fas fa-balance-scale fa-2x text-primary mb-3"></i>
+                        <h5 class="card-title">Transparency</h5>
+                        <p class="card-text">Know the source of your produce and its fair price.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-0 rounded-3">
+                    <div class="card-body text-center">
+                        <i class="fas fa-truck fa-2x text-primary mb-3"></i>
+                        <h5 class="card-title">Convenience</h5>
+                        <p class="card-text">Easy ordering and Cash on Delivery for hassle-free shopping.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Farmer Cards -->
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-0 rounded-3">
+                    <div class="card-body text-center">
+                        <i class="fas fa-coins fa-2x text-success mb-3"></i>
+                        <h5 class="card-title">Higher Profits</h5>
+                        <p class="card-text">Sell directly to customers and keep more of your earnings.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-0 rounded-3">
+                    <div class="card-body text-center">
+                        <i class="fas fa-users fa-2x text-success mb-3"></i>
+                        <h5 class="card-title">Direct Connection</h5>
+                        <p class="card-text">Build lasting relationships with your customer base.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-0 rounded-3">
+                    <div class="card-body text-center">
+                        <i class="fas fa-cogs fa-2x text-success mb-3"></i>
+                        <h5 class="card-title">Simple Tools</h5>
+                        <p class="card-text">Easily manage your inventory and track orders.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-5">
+            <h2 class="h4 mb-0 text-success"><i class="fas fa-star"></i> Featured Products</h2>
+            <a class="btn btn-outline-success" asp-controller="Consumer" asp-action="Products">Browse All</a>
+        </div>
+        <div class="row mt-3">
+            @{
+                var featured = ViewBag.FeaturedProducts as IEnumerable<AgroBazaar.Models.Entities.Product>;
+            }
+            @if (featured != null && featured.Any())
+            {
+                foreach (var p in featured)
+                {
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                        <div class="card h-100">
+                            <div class="position-relative">
+                                @if (!string.IsNullOrEmpty(p.ImageUrl))
+                                {
+                                    <img src="@p.ImageUrl" class="card-img-top" alt="@p.Name" style="height: 200px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <i class="fas fa-image fa-3x text-muted"></i>
+                                    </div>
+                                }
+                                <span class="badge bg-success position-absolute top-0 end-0 m-2">₹@p.Price/@p.Unit</span>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="card-title">@p.Name</h6>
+                                <p class="card-text text-muted small flex-grow-1">@((p.Description?.Length ?? 0) > 80 ? p.Description.Substring(0, 80) + "..." : p.Description)</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <small class="text-muted">By @p.Farmer.FirstName @p.Farmer.LastName</small>
+                                    <span class="badge @(p.QuantityAvailable > 10 ? "bg-success" : "bg-warning")">@p.QuantityAvailable @p.Unit</span>
+                                </div>
+                                <div class="d-flex gap-2 mt-auto">
+                                    <a class="btn btn-outline-primary btn-sm flex-grow-1" asp-controller="Consumer" asp-action="ProductDetails" asp-route-id="@p.Id">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <button class="btn btn-success btn-sm" onclick="addToCart(@p.Id)">
+                                        <i class="fas fa-cart-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12">
+                    <div class="alert alert-info"><i class="fas fa-info-circle"></i> No featured products yet.</div>
+                </div>
+            }
+        </div>
+
+        <div class="mt-4 text-end">
+            <a class="btn btn-outline-secondary" asp-action="TrackOrder"><i class="fas fa-shipping-fast"></i> Track Order</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function addToCart(productId) {
+            $.ajax({
+                url: '@Url.Action("AddToCart", "Consumer")',
+                type: 'POST',
+                data: { productId: productId, quantity: 1 },
+                success: function (response) {
+                    if (response.success) {
+                        showAlert('success', response.message);
+                        updateCartCount(response.cartItemCount);
+                    } else {
+                        showAlert('warning', response.message || 'Please login to add items to cart.');
+                    }
+                },
+                error: function () {
+                    showAlert('danger', 'Error adding item to cart.');
+                }
+            });
+        }
+        function updateCartCount(count) {
+            $('.cart-count').text(count);
+            if (count > 0) $('.cart-count').show();
+        }
+        function showAlert(type, message) {
+            const alertHtml = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">`+
+                `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i> ${message}`+
+                `<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+            $('.alert').remove();
+            $('.container:first').prepend(alertHtml);
+            setTimeout(() => $('.alert').fadeOut(), 3000);
+        }
+    </script>
+}

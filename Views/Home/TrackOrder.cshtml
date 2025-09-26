@@ -1,0 +1,81 @@
+@{
+    ViewData["Title"] = "Track Order";
+}
+
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <strong><i class="fas fa-shipping-fast"></i> Track Your Order</strong>
+            </div>
+            <div class="card-body">
+                <form method="get" asp-action="TrackOrder">
+                    <div class="input-group input-group-lg">
+                        <input type="text" name="orderNumber" class="form-control" placeholder="Enter your order number (e.g., ORD20250101123456)" value="@Context.Request.Query["orderNumber"]" required>
+                        <button class="btn btn-success" type="submit"><i class="fas fa-search"></i> Track</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @{
+            var order = ViewBag.Order as AgroBazaar.Models.Entities.Order;
+        }
+        @if (order != null)
+        {
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Order #@order.OrderNumber</strong>
+                    <span class="badge bg-@(order.Status == "Delivered" ? "success" : order.Status == "Shipped" ? "info" : order.Status == "Processing" ? "warning" : "secondary")">@order.Status</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="small text-muted">Order Date</div>
+                            <div>@order.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Payment</div>
+                            <div>@order.PaymentMethod • <span class="badge bg-@(order.PaymentStatus == "Paid" ? "success" : "warning")">@order.PaymentStatus</span></div>
+                        </div>
+                        <div class="col-12">
+                            <div class="small text-muted">Delivery Address</div>
+                            <div>@order.DeliveryAddress</div>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <h6 class="mb-3">Items</h6>
+                    @foreach (var item in order.OrderItems)
+                    {
+                        <div class="border-bottom py-2">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <div class="fw-semibold">@item.Product.Name</div>
+                                    <div class="small text-muted">@item.Quantity @item.Product.Unit × ₹@item.UnitPrice.ToString("N2")</div>
+                                </div>
+                                <div class="text-success">₹@item.TotalPrice.ToString("N2")</div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <div class="fw-semibold">Total</div>
+                        <div class="fw-semibold text-success">₹@order.TotalAmount.ToString("N2")</div>
+                    </div>
+
+                    <div class="mt-3 d-flex gap-2">
+                        <a class="btn btn-outline-secondary" asp-controller="Auth" asp-action="Login">Login to view more</a>
+                        <a class="btn btn-outline-primary" asp-controller="Consumer" asp-action="Orders">My Orders</a>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(Context.Request.Query["orderNumber"]))
+        {
+            <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Order not found. Please check the number and try again.</div>
+        }
+    </div>
+</div>
+

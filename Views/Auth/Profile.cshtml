@@ -1,0 +1,121 @@
+@model AgroBazaar.Models.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="row">
+    <div class="col-12 mb-3">
+        <h2><i class="fas fa-user-circle text-success"></i> My Profile</h2>
+        <p class="text-muted">Manage your account details and change your password.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header">
+                <strong>Profile Information</strong>
+            </div>
+            <div class="card-body">
+                <form asp-action="Profile" method="post" class="needs-validation" novalidate>
+                    <input type="hidden" asp-for="Id" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input class="form-control" value="@Model.Email" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">User Type</label>
+                            <input class="form-control" value="@Model.UserType" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="FirstName" class="form-label"></label>
+                            <input asp-for="FirstName" class="form-control" />
+                            <span asp-validation-for="FirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="LastName" class="form-label"></label>
+                            <input asp-for="LastName" class="form-control" />
+                            <span asp-validation-for="LastName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PhoneNumber" class="form-label"></label>
+                            <input asp-for="PhoneNumber" class="form-control" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Address" class="form-label"></label>
+                            <textarea asp-for="Address" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="Address" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="City" class="form-label"></label>
+                            <input asp-for="City" class="form-control" />
+                            <span asp-validation-for="City" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="State" class="form-label"></label>
+                            <input asp-for="State" class="form-control" />
+                            <span asp-validation-for="State" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="PinCode" class="form-label"></label>
+                            <input asp-for="PinCode" class="form-control" />
+                            <span asp-validation-for="PinCode" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted">Member since: @Model.CreatedAt.ToString("dd MMM yyyy")</small>
+                        </div>
+                    </div>
+                    <div class="mt-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <a asp-controller="@(User.IsInRole("Farmer") ? "Farmer" : "Consumer")" asp-action="Dashboard" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header">
+                <strong>Change Password</strong>
+            </div>
+            <div class="card-body">
+                <form asp-action="ChangePassword" method="post">
+                    <div class="mb-3">
+                        <label class="form-label" for="CurrentPassword">Current Password</label>
+                        <input class="form-control" type="password" name="CurrentPassword" id="CurrentPassword" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="NewPassword">New Password</label>
+                        <input class="form-control" type="password" name="NewPassword" id="NewPassword" minlength="6" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="ConfirmNewPassword">Confirm New Password</label>
+                        <input class="form-control" type="password" name="ConfirmNewPassword" id="ConfirmNewPassword" minlength="6" required />
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-key"></i> Update Password
+                    </button>
+                </form>
+                @if (ViewData["PasswordErrors"] as bool? == true)
+                {
+                    <div class="alert alert-danger mt-3">
+                        <i class="fas fa-exclamation-circle"></i> Please fix the errors in the form.
+                    </div>
+                }
+                <div class="mt-4 small text-muted">
+                    <i class="fas fa-shield-alt"></i> Use at least 6 characters. A mix of letters, numbers, and symbols is recommended.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

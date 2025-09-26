@@ -1,0 +1,118 @@
+@model AgroBazaar.Models.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Register - AgroBazaar";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white text-center">
+                    <h4><i class="fas fa-user-plus"></i> Join AgroBazaar</h4>
+                </div>
+                <div class="card-body">
+                    @if (ViewData.ModelState.ErrorCount > 0)
+                    {
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <form asp-action="Register" asp-controller="Auth" method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstName" class="form-label">First Name</label>
+                                <input asp-for="FirstName" class="form-control" placeholder="Enter first name" />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LastName" class="form-label">Last Name</label>
+                                <input asp-for="LastName" class="form-control" placeholder="Enter last name" />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email Address</label>
+                            <input asp-for="Email" class="form-control" placeholder="Enter your email" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="UserType" class="form-label">I am a</label>
+                            <select asp-for="UserType" class="form-select">
+                                <option value="">Select your role</option>
+                                <option value="Farmer">Farmer - I want to sell my products</option>
+                                <option value="Consumer">Consumer - I want to buy products</option>
+                            </select>
+                            <span asp-validation-for="UserType" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Password" class="form-label">Password</label>
+                                <input asp-for="Password" class="form-control" placeholder="Create password" />
+                                <span asp-validation-for="Password" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                                <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm password" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PhoneNumber" class="form-label">Phone Number (Optional)</label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="Enter phone number" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Address" class="form-label">Address (Optional)</label>
+                            <textarea asp-for="Address" class="form-control" rows="2" placeholder="Enter your address"></textarea>
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="City" class="form-label">City</label>
+                                <input asp-for="City" class="form-control" placeholder="City" />
+                                <span asp-validation-for="City" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="State" class="form-label">State</label>
+                                <input asp-for="State" class="form-control" placeholder="State" />
+                                <span asp-validation-for="State" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="PinCode" class="form-label">Pin Code</label>
+                                <input asp-for="PinCode" class="form-control" placeholder="Pin Code" />
+                                <span asp-validation-for="PinCode" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-user-plus"></i> Create Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <p class="mb-0">Already have an account? 
+                        <a asp-action="Login" asp-controller="Auth" class="text-success">Login here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
