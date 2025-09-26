@@ -1,0 +1,236 @@
+@model IEnumerable<AgroBazaar.Models.Entities.Order>
+
+@{
+    ViewData["Title"] = "Order Management - Farmer Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-list-alt text-success"></i> Order Management</h2>
+    <div class="btn-group" role="group">
+        <input type="radio" class="btn-check" name="statusFilter" id="all" value="all" checked>
+        <label class="btn btn-outline-secondary" for="all">All Orders</label>
+        
+        <input type="radio" class="btn-check" name="statusFilter" id="pending" value="Pending">
+        <label class="btn btn-outline-warning" for="pending">Pending</label>
+        
+        <input type="radio" class="btn-check" name="statusFilter" id="processing" value="Processing">
+        <label class="btn btn-outline-info" for="processing">Processing</label>
+        
+        <input type="radio" class="btn-check" name="statusFilter" id="shipped" value="Shipped">
+        <label class="btn btn-outline-primary" for="shipped">Shipped</label>
+        
+        <input type="radio" class="btn-check" name="statusFilter" id="delivered" value="Delivered">
+        <label class="btn btn-outline-success" for="delivered">Delivered</label>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="row">
+        <div class="col-12">
+            @foreach (var order in Model)
+            {
+                <div class="card mb-3 order-card" data-status="@order.Status">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <strong>Order #@order.OrderNumber</strong>
+                            </div>
+                            <div class="col-md-2">
+                                <small class="text-muted">@order.OrderDate.ToString("dd MMM yyyy")</small>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="badge bg-@(order.Status == "Delivered" ? "success" : order.Status == "Shipped" ? "info" : order.Status == "Processing" ? "warning" : "secondary") status-badge" id="status-@order.Id">
+                                    @order.Status
+                                </span>
+                            </div>
+                            <div class="col-md-2">
+                                <strong>@order.Customer.FirstName @order.Customer.LastName</strong>
+                            </div>
+                            <div class="col-md-2">
+                                @{
+                                    var farmerItems = order.OrderItems.Where(oi => oi.Product.FarmerId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+                                    var farmerTotal = farmerItems.Sum(oi => oi.TotalPrice);
+                                }
+                                <strong class="text-success">₹@farmerTotal.ToString("N2")</strong>
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <div class="btn-group">
+                                    <a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    @if (order.Status != "Delivered" && order.Status != "Cancelled")
+                                    {
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-outline-success btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                                <i class="fas fa-edit"></i> Update
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                @if (order.Status == "Pending")
+                                                {
+                                                    <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(@order.Id, 'Processing')">Mark as Processing</a></li>
+                                                }
+                                                @if (order.Status == "Processing")
+                                                {
+                                                    <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(@order.Id, 'Shipped')">Mark as Shipped</a></li>
+                                                }
+                                                @if (order.Status == "Shipped")
+                                                {
+                                                    <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(@order.Id, 'Delivered')">Mark as Delivered</a></li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Your Products in this Order</h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach (var item in farmerItems.Take(3))
+                                    {
+                                        <div class="d-flex align-items-center bg-light rounded p-2">
+                                            @if (!string.IsNullOrEmpty(item.Product.ImageUrl))
+                                            {
+                                                <img src="@item.Product.ImageUrl" alt="@item.Product.Name" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                            }
+                                            else
+                                            {
+                                                <div class="bg-secondary rounded me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-image text-white"></i>
+                                                </div>
+                                            }
+                                            <div>
+                                                <small><strong>@item.Product.Name</strong></small><br>
+                                                <small class="text-muted">@item.Quantity @item.Product.Unit × ₹@item.UnitPrice.ToString("N2")</small>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (farmerItems.Count() > 3)
+                                    {
+                                        <div class="d-flex align-items-center">
+                                            <small class="text-muted">+@(farmerItems.Count() - 3) more items</small>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Payment:</small><br>
+                                        <small>@order.PaymentMethod</small><br>
+                                        <small class="badge bg-@(order.PaymentStatus == "Paid" ? "success" : "warning")">@order.PaymentStatus</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Delivery Address:</small><br>
+                                        <small>@(order.DeliveryAddress.Length > 50 ? order.DeliveryAddress.Substring(0, 50) + "..." : order.DeliveryAddress)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-clipboard-list fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted">No Orders Yet</h4>
+                    <p class="text-muted mb-4">Orders for your products will appear here when customers place them.</p>
+                    <a asp-action="Products" class="btn btn-success">
+                        <i class="fas fa-seedling"></i> Manage Your Products
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Filter orders by status
+        $('input[name="statusFilter"]').change(function() {
+            const selectedStatus = $(this).val();
+            
+            $('.order-card').each(function() {
+                const orderStatus = $(this).data('status');
+                
+                if (selectedStatus === 'all' || orderStatus === selectedStatus) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+
+        function updateOrderStatus(orderId, newStatus) {
+            if (confirm(`Are you sure you want to mark this order as ${newStatus}?`)) {
+                $.ajax({
+                    url: '@Url.Action("UpdateOrderStatus", "Farmer")',
+                    type: 'POST',
+                    data: {
+                        orderId: orderId,
+                        status: newStatus,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Update status badge
+                            const statusBadge = $('#status-' + orderId);
+                            statusBadge.removeClass().addClass('badge bg-' + getStatusClass(newStatus)).text(newStatus);
+                            
+                            // Update order card data attribute
+                            statusBadge.closest('.order-card').attr('data-status', newStatus);
+                            
+                            showAlert('success', response.message);
+                            
+                            // Reload page after 2 seconds to refresh dropdown options
+                            setTimeout(function() {
+                                location.reload();
+                            }, 2000);
+                        } else {
+                            showAlert('danger', response.message);
+                        }
+                    },
+                    error: function() {
+                        showAlert('danger', 'Error updating order status. Please try again.');
+                    }
+                });
+            }
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'Delivered': return 'success';
+                case 'Shipped': return 'info';
+                case 'Processing': return 'warning';
+                default: return 'secondary';
+            }
+        }
+
+        function showAlert(type, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            $('.alert').remove();
+            $('h2').after(alertHtml);
+            
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+    </script>
+}

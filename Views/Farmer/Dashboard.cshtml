@@ -1,0 +1,174 @@
+@{
+    ViewData["Title"] = "Farmer Dashboard - AgroBazaar";
+}
+
+<!-- Removed extra .container-fluid -->
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-tractor text-success"></i> Welcome, @ViewBag.UserName</h2>
+            <div class="dropdown">
+                <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-user"></i> Account
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" asp-controller="Auth" asp-action="Profile"><i class="fas fa-user-edit"></i> Profile</a></li>
+                    <li><a class="dropdown-item" asp-controller="Auth" asp-action="ChangePassword"><i class="fas fa-key"></i> Change Password</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                            <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5>Total Products</h5>
+                        <h3>@ViewBag.TotalProducts</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-seedling fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <small>Active: @ViewBag.ActiveProducts</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5>Total Orders</h5>
+                        <h3>@ViewBag.TotalOrders</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-shopping-cart fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <small>Pending: @ViewBag.PendingOrders</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5>Revenue</h5>
+                        <h3>₹@ViewBag.TotalRevenue.ToString("N0")</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-rupee-sign fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <small>Total Earned</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5>Active</h5>
+                        <h3>@ViewBag.ActiveProducts</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <small>Products Available</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a asp-action="Products" class="btn btn-outline-primary btn-lg w-100">
+                            <i class="fas fa-plus-circle"></i><br>
+                            Add Product
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a asp-action="Products" class="btn btn-outline-success btn-lg w-100">
+                            <i class="fas fa-list"></i><br>
+                            View Products
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a asp-action="Orders" class="btn btn-outline-warning btn-lg w-100">
+                            <i class="fas fa-shopping-bag"></i><br>
+                            Manage Orders
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a asp-action="PaymentHistory" class="btn btn-outline-info btn-lg w-100">
+                            <i class="fas fa-money-check-alt"></i><br>
+                            Payment History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-clock"></i> Recent Orders</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center text-muted">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>No recent orders to display</p>
+                    <small>Orders will appear here when customers place them</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-exclamation-triangle"></i> Low Stock Alerts</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center text-muted">
+                    <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                    <p>All products are well stocked</p>
+                    <small>Low stock products will appear here</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

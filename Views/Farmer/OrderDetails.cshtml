@@ -1,0 +1,290 @@
+@model AgroBazaar.Models.Entities.Order
+
+@{
+    ViewData["Title"] = $"Order Details - {Model.OrderNumber}";
+    var farmerOrderItems = ViewBag.FarmerOrderItems as List<AgroBazaar.Models.Entities.OrderItem>;
+    var farmerTotal = (decimal)ViewBag.FarmerTotal;
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var avgRatings = ViewBag.ProductAvgRatings as Dictionary<int, double> ?? new Dictionary<int, double>();
+}
+
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Dashboard">Dashboard</a></li>
+                <li class="breadcrumb-item"><a asp-action="Orders">Orders</a></li>
+                <li class="breadcrumb-item active">Order #@Model.OrderNumber</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Order Information -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-info-circle"></i> Order Information</h5>
+                <span class="badge bg-@(Model.Status == "Delivered" ? "success" : Model.Status == "Shipped" ? "info" : Model.Status == "Processing" ? "warning" : "secondary") fs-6" id="current-status">
+                    @Model.Status
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Order Details</h6>
+                        <p class="mb-1"><strong>Order Number:</strong> @Model.OrderNumber</p>
+                        <p class="mb-1"><strong>Order Date:</strong> @Model.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</p>
+                        <p class="mb-1"><strong>Payment Method:</strong> @Model.PaymentMethod</p>
+                        <p class="mb-1"><strong>Payment Status:</strong> 
+                            <span class="badge bg-@(Model.PaymentStatus == "Paid" ? "success" : "warning")">@Model.PaymentStatus</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Customer Information</h6>
+                        <p class="mb-1"><strong>Name:</strong> @Model.Customer.FirstName @Model.Customer.LastName</p>
+                        <p class="mb-1"><strong>Email:</strong> @Model.Customer.Email</p>
+                        <p class="mb-1"><strong>Phone:</strong> @Model.Customer.PhoneNumber</p>
+                        <p class="mb-1"><strong>Delivery Address:</strong></p>
+                        <p class="text-muted">@Model.DeliveryAddress</p>
+                    </div>
+                </div>
+
+                @if (Model.Status != "Delivered" && Model.Status != "Cancelled")
+                {
+                    <div class="mt-3">
+                        <h6>Update Order Status</h6>
+                        <div class="btn-group" role="group">
+                            @if (Model.Status == "Pending")
+                            {
+                                <button class="btn btn-warning" onclick="updateOrderStatus(@Model.Id, 'Processing')">
+                                    <i class="fas fa-cog"></i> Mark as Processing
+                                </button>
+                            }
+                            @if (Model.Status == "Processing")
+                            {
+                                <button class="btn btn-info" onclick="updateOrderStatus(@Model.Id, 'Shipped')">
+                                    <i class="fas fa-shipping-fast"></i> Mark as Shipped
+                                </button>
+                            }
+                            @if (Model.Status == "Shipped")
+                            {
+                                <button class="btn btn-success" onclick="updateOrderStatus(@Model.Id, 'Delivered')">
+                                    <i class="fas fa-check-circle"></i> Mark as Delivered
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Your Products in this Order -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-seedling"></i> Your Products in this Order (@(farmerOrderItems?.Count() ?? 0))</h5>
+            </div>
+            <div class="card-body p-0">
+                @if (farmerOrderItems != null)
+                {
+                    @foreach (var item in farmerOrderItems)
+                    {
+                        <div class="border-bottom p-3">
+                            <div class="row align-items-center">
+                                <div class="col-md-2">
+                                    @if (!string.IsNullOrEmpty(item.Product.ImageUrl))
+                                    {
+                                        <img src="@item.Product.ImageUrl" alt="@item.Product.Name" class="img-fluid rounded" style="max-height: 80px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 80px;">
+                                            <i class="fas fa-image text-muted"></i>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="col-md-4">
+                                    <h6 class="mb-1">@item.Product.Name</h6>
+                                    <small class="text-muted">@item.Product.Category.Name</small><br>
+                                    @if (!string.IsNullOrEmpty(item.Product.Description))
+                                    {
+                                        <small class="text-muted">@(item.Product.Description.Length > 50 ? item.Product.Description.Substring(0, 50) + "..." : item.Product.Description)</small>
+                                    }
+                                    <div class="small mt-1">
+                                        <i class="fas fa-star text-warning"></i>
+                                        Avg: <strong>@(avgRatings.TryGetValue(item.ProductId, out var r) ? Math.Round(r, 1) : 0)</strong>/5
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong>₹@item.UnitPrice.ToString("N2")</strong><br>
+                                    <small class="text-muted">per @item.Product.Unit</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong>@item.Quantity @item.Product.Unit</strong>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <strong class="text-success">₹@item.TotalPrice.ToString("N2")</strong>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Earnings Summary -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-rupee-sign"></i> Your Earnings</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Products Sold:</span>
+                    <strong>@farmerOrderItems.Sum(i => i.Quantity) items</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Gross Amount:</span>
+                    <strong>₹@farmerTotal.ToString("N2")</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Platform Fee (5%):</span>
+                    <span>₹@((farmerTotal * 0.05m).ToString("N2"))</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-3">
+                    <strong>Net Earnings:</strong>
+                    <strong class="text-success">₹@((farmerTotal * 0.95m).ToString("N2"))</strong>
+                </div>
+
+                @if (Model.Status == "Delivered")
+                {
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> Payment will be processed within 2-3 business days.
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Payment will be processed after delivery confirmation.
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Order Actions -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h6>Order Actions</h6>
+                <div class="d-grid gap-2">
+                    <a asp-action="Orders" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Orders
+                    </a>
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print Order Details
+                    </button>
+                    @if (Model.Status == "Delivered")
+                    {
+                        <a class="btn btn-outline-success" asp-action="Invoice" asp-route-id="@Model.Id" target="_blank">
+                            <i class="fas fa-file-invoice"></i> Download Invoice
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Contact -->
+        <div class="card">
+            <div class="card-body">
+                <h6><i class="fas fa-user text-success"></i> Customer Contact</h6>
+                <p class="mb-1"><strong>@Model.Customer.FirstName @Model.Customer.LastName</strong></p>
+                <p class="mb-1"><small class="text-muted">@Model.Customer.Email</small></p>
+                <p class="mb-1"><small class="text-muted">@Model.Customer.PhoneNumber</small></p>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> Contact customer for delivery coordination if needed.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateOrderStatus(orderId, newStatus) {
+            if (confirm(`Are you sure you want to mark this order as ${newStatus}?`)) {
+                $.ajax({
+                    url: '@Url.Action("UpdateOrderStatus", "Farmer")',
+                    type: 'POST',
+                    data: {
+                        orderId: orderId,
+                        status: newStatus,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Update status badge
+                            const statusBadge = $('#current-status');
+                            statusBadge.removeClass().addClass('badge bg-' + getStatusClass(newStatus) + ' fs-6').text(newStatus);
+                            
+                            showAlert('success', response.message);
+                            
+                            // Reload page after 2 seconds to refresh action buttons
+                            setTimeout(function() {
+                                location.reload();
+                            }, 2000);
+                        } else {
+                            showAlert('danger', response.message);
+                        }
+                    },
+                    error: function() {
+                        showAlert('danger', 'Error updating order status. Please try again.');
+                    }
+                });
+            }
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'Delivered': return 'success';
+                case 'Shipped': return 'info';
+                case 'Processing': return 'warning';
+                default: return 'secondary';
+            }
+        }
+
+        function showAlert(type, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            $('.alert:not(.alert-success):not(.alert-info)').remove();
+            $('.breadcrumb').after(alertHtml);
+            
+            setTimeout(function() {
+                $('.alert-success:last, .alert-danger:last').fadeOut();
+            }, 5000);
+        }
+    </script>
+}
+
+<style media="print">
+    .btn, .breadcrumb, .card-header {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .col-lg-4 .card:not(:first-child) {
+        display: none !important;
+    }
+</style>

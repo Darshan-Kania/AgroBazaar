@@ -1,0 +1,249 @@
+@model IEnumerable<AgroBazaar.Models.Entities.Product>
+
+@{
+    ViewData["Title"] = "Products - AgroBazaar";
+}
+
+<!-- Search and Filter Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" asp-action="Products">
+                    <div class="row align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Search Products</label>
+                            <input type="text" name="search" class="form-control" placeholder="Search by name or description..." value="@ViewBag.SearchTerm">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Category</label>
+                            <select name="categoryId" class="form-select">
+                                <option value="">All Categories</option>
+                                @foreach (var category in ViewBag.Categories)
+                                {
+                                    <option value="@category.Id" selected="@(ViewBag.CurrentCategory == category.Id)">@category.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Min Price (₹)</label>
+                            <input type="number" name="minPrice" class="form-control" placeholder="0" value="@ViewBag.MinPrice" step="0.01">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Max Price (₹)</label>
+                            <input type="number" name="maxPrice" class="form-control" placeholder="1000" value="@ViewBag.MaxPrice" step="0.01">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-search"></i> Search & Filter
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Info -->
+<div class="row mb-3">
+    <div class="col-md-6">
+        <h4>
+            @if (!string.IsNullOrEmpty(ViewBag.SearchTerm?.ToString()))
+            {
+                <span>Search Results for "@ViewBag.SearchTerm"</span>
+            }
+            else if (ViewBag.CurrentCategory != null)
+            {
+                var categories = ViewBag.Categories as IEnumerable<AgroBazaar.Models.Entities.Category>;
+                var categoryName = categories?.FirstOrDefault(c => c.Id == ViewBag.CurrentCategory)?.Name;
+                <span>@categoryName Products</span>
+            }
+            else
+            {
+                <span>All Products</span>
+            }
+        </h4>
+        <p class="text-muted">Showing @ViewBag.TotalProducts products</p>
+    </div>
+    <div class="col-md-6 text-end">
+        @if (ViewBag.SearchTerm != null || ViewBag.CurrentCategory != null || ViewBag.MinPrice != null || ViewBag.MaxPrice != null)
+        {
+            <a asp-action="Products" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i> Clear Filters
+            </a>
+        }
+    </div>
+</div>
+
+<!-- Products Grid -->
+@if (Model.Any())
+{
+    <div class="row">
+        @foreach (var product in Model)
+        {
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="card h-100 product-card">
+                    <div class="position-relative">
+                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                        {
+                            <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 200px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-image fa-3x text-muted"></i>
+                            </div>
+                        }
+                        <span class="badge bg-success position-absolute top-0 end-0 m-2">₹@product.Price/@product.Unit</span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">@product.Name</h6>
+                        <p class="card-text text-muted small flex-grow-1">
+                            @if (!string.IsNullOrEmpty(product.Description))
+                            {
+                                @(product.Description.Length > 80 ? product.Description.Substring(0, 80) + "..." : product.Description)
+                            }
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">By @product.Farmer.FirstName @product.Farmer.LastName</small>
+                            <span class="badge @(product.QuantityAvailable > 10 ? "bg-success" : "bg-warning")">
+                                @product.QuantityAvailable @product.Unit available
+                            </span>
+                        </div>
+                        <div class="mt-auto">
+                            <div class="d-flex gap-2">
+                                <a asp-action="ProductDetails" asp-route-id="@product.Id" class="btn btn-outline-primary btn-sm flex-grow-1">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                                <button class="btn btn-success btn-sm" onclick="addToCart(@product.Id)">
+                                    <i class="fas fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (ViewBag.TotalPages > 1)
+    {
+        <nav aria-label="Products pagination">
+            <ul class="pagination justify-content-center">
+                @if (ViewBag.CurrentPage > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Products" asp-route-page="@(ViewBag.CurrentPage - 1)" 
+                           asp-route-categoryId="@ViewBag.CurrentCategory" asp-route-search="@ViewBag.SearchTerm" 
+                           asp-route-minPrice="@ViewBag.MinPrice" asp-route-maxPrice="@ViewBag.MaxPrice">Previous</a>
+                    </li>
+                }
+
+                @for (int i = Math.Max(1, ViewBag.CurrentPage - 2); i <= Math.Min(ViewBag.TotalPages, ViewBag.CurrentPage + 2); i++)
+                {
+                    <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                        <a class="page-link" asp-action="Products" asp-route-page="@i" 
+                           asp-route-categoryId="@ViewBag.CurrentCategory" asp-route-search="@ViewBag.SearchTerm" 
+                           asp-route-minPrice="@ViewBag.MinPrice" asp-route-maxPrice="@ViewBag.MaxPrice">@i</a>
+                    </li>
+                }
+
+                @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Products" asp-route-page="@(ViewBag.CurrentPage + 1)" 
+                           asp-route-categoryId="@ViewBag.CurrentCategory" asp-route-search="@ViewBag.SearchTerm" 
+                           asp-route-minPrice="@ViewBag.MinPrice" asp-route-maxPrice="@ViewBag.MaxPrice">Next</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}
+else
+{
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Products Found</h4>
+                    <p class="text-muted mb-4">
+                        @if (!string.IsNullOrEmpty(ViewBag.SearchTerm?.ToString()))
+                        {
+                            <span>No products match your search criteria. Try different keywords or clear filters.</span>
+                        }
+                        else
+                        {
+                            <span>No products available at the moment. Please check back later.</span>
+                        }
+                    </p>
+                    <a asp-action="Products" class="btn btn-success">Browse All Products</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function addToCart(productId) {
+            $.ajax({
+                url: '@Url.Action("AddToCart", "Consumer")',
+                type: 'POST',
+                data: {
+                    productId: productId,
+                    quantity: 1,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('success', response.message);
+                        updateCartCount(response.cartItemCount);
+                    } else {
+                        showAlert('danger', response.message);
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Error adding item to cart. Please try again.');
+                }
+            });
+        }
+
+        function updateCartCount(count) {
+            $('.cart-count').text(count);
+            if (count > 0) {
+                $('.cart-count').show();
+            }
+        }
+
+        function showAlert(type, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            $('.alert').remove();
+            $('.row:first').before(alertHtml);
+            
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 3000);
+        }
+    </script>
+}
+
+<style>
+    .product-card {
+        transition: transform 0.2s;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+    }
+</style>

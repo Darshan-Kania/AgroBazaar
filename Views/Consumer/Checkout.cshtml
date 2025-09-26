@@ -1,0 +1,187 @@
+@model AgroBazaar.Models.Entities.Cart
+
+@{
+    ViewData["Title"] = "Checkout - AgroBazaar";
+    var cart = ViewBag.Cart as AgroBazaar.Models.Entities.Cart;
+    var total = (decimal)ViewBag.Total;
+}
+
+<div class="row">
+    <div class="col-12">
+        <h2><i class="fas fa-credit-card text-success"></i> Checkout</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Products">Products</a></li>
+                <li class="breadcrumb-item"><a asp-action="Cart">Cart</a></li>
+                <li class="breadcrumb-item active">Checkout</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<form asp-action="PlaceOrder" method="post">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Delivery Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-truck"></i> Delivery Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="deliveryAddress" class="form-label">Delivery Address <span class="text-danger">*</span></label>
+                        <textarea name="deliveryAddress" id="deliveryAddress" class="form-control" rows="3" required 
+                                  placeholder="Enter your complete delivery address including landmark, city, state, and pincode"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Estimated Delivery</label>
+                                <div class="alert alert-info mb-0">
+                                    <i class="fas fa-info-circle"></i> 2-3 business days
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Delivery Charges</label>
+                                <div class="alert alert-success mb-0">
+                                    <i class="fas fa-gift"></i> Free Delivery
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-credit-card"></i> Payment Method</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="cod" value="Cash on Delivery" checked>
+                        <label class="form-check-label" for="cod">
+                            <strong>Cash on Delivery</strong>
+                            <br><small class="text-muted">Pay when you receive your order</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="upi" value="UPI" disabled>
+                        <label class="form-check-label text-muted" for="upi">
+                            <strong>UPI Payment</strong>
+                            <br><small>Coming Soon</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="card" value="Card Payment" disabled>
+                        <label class="form-check-label text-muted" for="card">
+                            <strong>Card Payment</strong>
+                            <br><small>Coming Soon</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Order Summary -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-receipt"></i> Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Items (@(cart?.CartItems.Count() ?? 0))</h6>
+                        @if (cart?.CartItems != null)
+                        {
+                            @foreach (var item in cart.CartItems)
+                            {
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div>
+                                        <small>@item.Product.Name</small><br>
+                                        <small class="text-muted">@item.Quantity × ₹@item.UnitPrice.ToString("N2")</small>
+                                    </div>
+                                    <small><strong>₹@((item.UnitPrice * item.Quantity).ToString("N2"))</strong></small>
+                                </div>
+                            }
+                        }
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <strong>₹@total.ToString("N2")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Delivery:</span>
+                        <span class="text-success">Free</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tax:</span>
+                        <span>Included</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Total Amount:</strong>
+                        <strong class="text-success fs-5">₹@total.ToString("N2")</strong>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check-circle"></i> Place Order
+                        </button>
+                        <a asp-action="Cart" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Cart
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Information -->
+            <div class="card">
+                <div class="card-body">
+                    <h6><i class="fas fa-shield-alt text-success"></i> Secure Checkout</h6>
+                    <ul class="list-unstyled mb-0 small">
+                        <li><i class="fas fa-check text-success"></i> SSL encrypted connection</li>
+                        <li><i class="fas fa-check text-success"></i> Safe payment processing</li>
+                        <li><i class="fas fa-check text-success"></i> Order tracking available</li>
+                        <li><i class="fas fa-check text-success"></i> 100% satisfaction guarantee</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Auto-resize textarea
+            $('textarea').on('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+
+            // Form validation
+            $('form').on('submit', function(e) {
+                const address = $('#deliveryAddress').val().trim();
+                
+                if (address.length < 20) {
+                    e.preventDefault();
+                    alert('Please provide a complete delivery address with at least 20 characters.');
+                    $('#deliveryAddress').focus();
+                    return false;
+                }
+
+                // Show loading state
+                $('button[type="submit"]').html('<i class="fas fa-spinner fa-spin"></i> Processing...').prop('disabled', true);
+            });
+        });
+    </script>
+}

@@ -1,0 +1,135 @@
+@model IEnumerable<AgroBazaar.Models.Entities.Order>
+
+@{
+    ViewData["Title"] = "My Orders - AgroBazaar";
+}
+
+<div class="row">
+    <div class="col-12">
+        <h2><i class="fas fa-shopping-bag text-success"></i> My Orders</h2>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="row">
+        <div class="col-12">
+            @foreach (var order in Model)
+            {
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <strong>Order #@order.OrderNumber</strong>
+                            </div>
+                            <div class="col-md-2">
+                                <small class="text-muted">@order.OrderDate.ToString("dd MMM yyyy")</small>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="badge bg-@(order.Status == "Delivered" ? "success" : order.Status == "Shipped" ? "info" : order.Status == "Processing" ? "warning" : "secondary")">
+                                    @order.Status
+                                </span>
+                            </div>
+                            <div class="col-md-2">
+                                <strong class="text-success">₹@order.TotalAmount.ToString("N2")</strong>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                                @if (order.Status == "Pending")
+                                {
+                                    <button class="btn btn-outline-danger btn-sm" onclick="cancelOrder(@order.Id)">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6>Items (@order.OrderItems.Count())</h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach (var item in order.OrderItems.Take(3))
+                                    {
+                                        <div class="d-flex align-items-center bg-light rounded p-2">
+                                            @if (!string.IsNullOrEmpty(item.Product.ImageUrl))
+                                            {
+                                                <img src="@item.Product.ImageUrl" alt="@item.Product.Name" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                            }
+                                            else
+                                            {
+                                                <div class="bg-secondary rounded me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-image text-white"></i>
+                                                </div>
+                                            }
+                                            <div>
+                                                <small><strong>@item.Product.Name</strong></small><br>
+                                                <small class="text-muted">@item.Quantity @item.Product.Unit</small>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (order.OrderItems.Count() > 3)
+                                    {
+                                        <div class="d-flex align-items-center">
+                                            <small class="text-muted">+@(order.OrderItems.Count() - 3) more items</small>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Payment:</small><br>
+                                        <small>@order.PaymentMethod</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Status:</small><br>
+                                        <small class="badge bg-@(order.PaymentStatus == "Paid" ? "success" : "warning")">@order.PaymentStatus</small>
+                                    </div>
+                                </div>
+                                @if (order.Status == "Shipped" || order.Status == "Delivered")
+                                {
+                                    <div class="mt-2">
+                                        <button class="btn btn-outline-info btn-sm w-100">
+                                            <i class="fas fa-truck"></i> Track Order
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-shopping-bag fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted">No Orders Yet</h4>
+                    <p class="text-muted mb-4">Start shopping to place your first order and enjoy fresh products from local farmers.</p>
+                    <a asp-action="Products" class="btn btn-success btn-lg">
+                        <i class="fas fa-shopping-cart"></i> Start Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function cancelOrder(orderId) {
+            if (confirm('Are you sure you want to cancel this order?')) {
+                // Implementation for order cancellation
+                alert('Order cancellation feature will be implemented soon.');
+            }
+        }
+    </script>
+}

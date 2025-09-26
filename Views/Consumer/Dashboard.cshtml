@@ -1,0 +1,277 @@
+@{
+    ViewData["Title"] = "Consumer Dashboard - AgroBazaar";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-shopping-cart text-success"></i> Welcome, @ViewBag.UserName</h2>
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <a asp-action="Cart" class="btn btn-outline-success position-relative">
+                            <i class="fas fa-shopping-cart"></i> Cart
+                            @if (ViewBag.CartItemCount > 0)
+                            {
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    @ViewBag.CartItemCount
+                                </span>
+                            }
+                        </a>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user"></i> Account
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" asp-controller="Auth" asp-action="Profile"><i class="fas fa-user-edit"></i> Profile</a></li>
+                            <li><a class="dropdown-item" asp-controller="Auth" asp-action="ChangePassword"><i class="fas fa-key"></i> Change Password</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                                    <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5>Cart Items</h5>
+                            <h3>@ViewBag.CartItemCount</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-shopping-cart fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small>Total: ₹@ViewBag.CartTotal.ToString("N2")</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5>Categories</h5>
+                            <h3>@((ViewBag.Categories as IEnumerable<dynamic>)?.Count() ?? 0)</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-tags fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small>Available to browse</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5>Products</h5>
+                            <h3>@((ViewBag.FeaturedProducts as IEnumerable<dynamic>)?.Count() ?? 0)</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-seedling fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small>Featured products</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Categories -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-tags"></i> Shop by Category</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @if (ViewBag.Categories != null)
+                        {
+                            @foreach (var category in ViewBag.Categories)
+                            {
+                                <div class="col-md-2 col-sm-4 col-6 mb-3">
+                                    <a asp-action="Products" asp-route-categoryId="@category.Id" class="text-decoration-none">
+                                        <div class="card text-center h-100 category-card">
+                                            <div class="card-body">
+                                                <i class="fas fa-leaf fa-2x text-success mb-2"></i>
+                                                <h6 class="card-title">@category.Name</h6>
+                                                <small class="text-muted">@category.Products.Count items</small>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Products -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-star"></i> Featured Products</h5>
+                    <a asp-action="Products" class="btn btn-outline-success btn-sm">View All Products</a>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.FeaturedProducts != null && ((IEnumerable<dynamic>)ViewBag.FeaturedProducts).Any())
+                    {
+                        <div class="row">
+                            @foreach (var product in ViewBag.FeaturedProducts)
+                            {
+                                <div class="col-md-3 col-sm-6 mb-4">
+                                    <div class="card product-card h-100">
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                            @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                            {
+                                                <img src="@product.ImageUrl" alt="@product.Name" class="img-fluid" style="max-height: 180px;">
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-image fa-3x text-muted"></i>
+                                            }
+                                        </div>
+                                        <div class="card-body">
+                                            <h6 class="card-title">@product.Name</h6>
+                                            <p class="card-text text-muted small">@product.Category.Name</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="h5 text-success">₹@product.Price/@product.Unit</span>
+                                                <small class="text-muted">@product.QuantityAvailable @product.Unit available</small>
+                                            </div>
+                                            <div class="mt-2">
+                                                <small class="text-muted">by @product.Farmer.FirstName @product.Farmer.LastName</small>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <button class="btn btn-success btn-sm w-100" onclick="addToCart(@product.Id)">
+                                                <i class="fas fa-cart-plus"></i> Add to Cart
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-seedling fa-3x mb-3"></i>
+                            <p>No featured products available</p>
+                            <a asp-action="Products" class="btn btn-success">Browse All Products</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Orders -->
+    @if (ViewBag.RecentOrders != null && ((IEnumerable<dynamic>)ViewBag.RecentOrders).Any())
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-history"></i> Recent Orders</h5>
+                        <a asp-action="Orders" class="btn btn-outline-success btn-sm">View All Orders</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var order in ViewBag.RecentOrders)
+                                    {
+                                        <tr>
+                                            <td>@order.OrderNumber</td>
+                                            <td>@order.OrderDate.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                <span class="badge bg-@(order.Status == "Delivered" ? "success" : order.Status == "Pending" ? "warning" : "primary")">
+                                                    @order.Status
+                                                </span>
+                                            </td>
+                                            <td>₹@order.TotalAmount.ToString("N2")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function addToCart(productId) {
+            fetch('@Url.Action("AddToCart", "Consumer")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': $('[name="__RequestVerificationToken"]').val()
+                },
+                body: JSON.stringify({ productId: productId, quantity: 1 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update cart count
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to add item to cart');
+            });
+        }
+    </script>
+}
+
+<style>
+    .category-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: all 0.3s ease;
+    }
+</style>

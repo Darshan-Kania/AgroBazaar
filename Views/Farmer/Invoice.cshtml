@@ -1,0 +1,99 @@
+@model AgroBazaar.Models.Entities.Order
+@{
+    Layout = null; // Print-friendly
+    var farmerItems = ViewBag.FarmerItems as List<AgroBazaar.Models.Entities.OrderItem> ?? new List<AgroBazaar.Models.Entities.OrderItem>();
+    var farmerTotal = (decimal)(ViewBag.FarmerTotal ?? 0m);
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seller Invoice - @Model.OrderNumber</title>
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        body { padding: 24px; }
+        .invoice-header { border-bottom: 2px solid #198754; margin-bottom: 16px; padding-bottom: 8px; }
+        .table th, .table td { vertical-align: middle; }
+        @@media print { .no-print { display: none !important; } body { padding: 0; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center invoice-header">
+        <div>
+            <h3 class="text-success m-0"><i class="fas fa-seedling"></i> AgroBazaar</h3>
+            <small class="text-muted">Seller Invoice</small>
+        </div>
+        <div class="text-end">
+            <h5 class="m-0">Order #@Model.OrderNumber</h5>
+            <small class="text-muted">@Model.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</small>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h6>Customer</h6>
+            <div>@Model.Customer.FirstName @Model.Customer.LastName</div>
+            <div class="text-muted small">@Model.DeliveryAddress</div>
+            <div class="text-muted small">@Model.Customer.Email</div>
+            <div class="text-muted small">@Model.Customer.PhoneNumber</div>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <h6>Payment</h6>
+            <div>Method: @Model.PaymentMethod</div>
+            <div>Status: <span class="badge bg-@(Model.PaymentStatus == "Paid" ? "success" : "warning")">@Model.PaymentStatus</span></div>
+            <div class="mt-2">Order Status: <strong>@Model.Status</strong></div>
+        </div>
+    </div>
+
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Product</th>
+                <th class="text-end">Unit Price</th>
+                <th class="text-end">Quantity</th>
+                <th class="text-end">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in farmerItems)
+        {
+            <tr>
+                <td>
+                    <div class="fw-semibold">@item.Product.Name</div>
+                    <div class="small text-muted">@item.Product.Category.Name</div>
+                </td>
+                <td class="text-end">₹@item.UnitPrice.ToString("N2")</td>
+                <td class="text-end">@item.Quantity @item.Product.Unit</td>
+                <td class="text-end">₹@item.TotalPrice.ToString("N2")</td>
+            </tr>
+        }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="3" class="text-end">Subtotal</th>
+                <th class="text-end">₹@farmerTotal.ToString("N2")</th>
+            </tr>
+            <tr>
+                <th colspan="3" class="text-end">Platform Fee (5%)</th>
+                <th class="text-end">₹@((farmerTotal * 0.05m).ToString("N2"))</th>
+            </tr>
+            <tr>
+                <th colspan="3" class="text-end">Net Payable</th>
+                <th class="text-end text-success">₹@((farmerTotal * 0.95m).ToString("N2"))</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="mt-4 d-flex justify-content-between">
+        <div class="small text-muted">This is a seller invoice for your portion of the order.</div>
+        <div class="no-print">
+            <button class="btn btn-outline-secondary" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

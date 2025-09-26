@@ -1,0 +1,235 @@
+@model AgroBazaar.Models.Entities.Product
+
+@{
+    ViewData["Title"] = "Add New Product - Farmer Dashboard";
+}
+
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Dashboard">Dashboard</a></li>
+                <li class="breadcrumb-item"><a asp-action="Products">Products</a></li>
+                <li class="breadcrumb-item active">Add New Product</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-plus-circle text-success"></i> Add New Product</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="AddProduct" asp-controller="Farmer" method="post" enctype="multipart/form-data" id="productForm">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Name" class="form-label">Product Name <span class="text-danger">*</span></label>
+                                <input asp-for="Name" class="form-control" placeholder="e.g., Fresh Organic Tomatoes" required>
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="CategoryId" class="form-label">Category <span class="text-danger">*</span></label>
+                                <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories" required>
+                                    <option value="">Select Category</option>
+                                </select>
+                                <span asp-validation-for="CategoryId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Describe your product, its quality, farming methods, etc."></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="Price" class="form-label">Price (₹) <span class="text-danger">*</span></label>
+                                <input asp-for="Price" class="form-control" type="number" step="0.01" min="0.01" placeholder="0.00" required>
+                                <span asp-validation-for="Price" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="QuantityAvailable" class="form-label">Stock Quantity <span class="text-danger">*</span></label>
+                                <input asp-for="QuantityAvailable" class="form-control" type="number" min="1" placeholder="0" required>
+                                <span asp-validation-for="QuantityAvailable" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="Unit" class="form-label">Unit <span class="text-danger">*</span></label>
+                                <select asp-for="Unit" class="form-select" required>
+                                    <option value="">Select Unit</option>
+                                    <option value="kg">Kilogram (kg)</option>
+                                    <option value="g">Gram (g)</option>
+                                    <option value="piece">Piece</option>
+                                    <option value="dozen">Dozen</option>
+                                    <option value="liter">Liter</option>
+                                    <option value="ml">Milliliter (ml)</option>
+                                    <option value="bundle">Bundle</option>
+                                    <option value="box">Box</option>
+                                </select>
+                                <span asp-validation-for="Unit" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="imageFile" class="form-label">Product Image</label>
+                        <input type="file" class="form-control" id="imageFile" name="imageFile" accept="image/*" onchange="previewImage(this)">
+                        <div class="form-text">Upload a clear image of your product. Supported formats: JPG, PNG, GIF (Max: 5MB)</div>
+                    </div>
+
+                    <div class="mb-3" id="imagePreview" style="display: none;">
+                        <label class="form-label">Image Preview</label>
+                        <div class="border rounded p-2">
+                            <img id="preview" src="" alt="Preview" class="img-fluid" style="max-height: 200px;">
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input asp-for="IsActive" class="form-check-input" type="checkbox" checked>
+                        <label asp-for="IsActive" class="form-check-label">
+                            Make this product available for sale immediately
+                        </label>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Products" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Products
+                        </a>
+                        <button type="submit" class="btn btn-success" id="submitBtn">
+                            <i class="fas fa-save"></i> Add Product
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#preview').attr('src', e.target.result);
+                    $('#imagePreview').show();
+                }
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                $('#imagePreview').hide();
+            }
+        }
+
+        // Enhanced form validation and submission
+        $('#productForm').on('submit', function(e) {
+            console.log('Form submission started');
+            
+            // Clear previous validation states
+            $('.is-invalid').removeClass('is-invalid');
+            
+            let isValid = true;
+            
+            // Validate required fields
+            const requiredFields = [
+                { field: 'input[name="Name"]', message: 'Product name is required' },
+                { field: 'select[name="CategoryId"]', message: 'Please select a category' },
+                { field: 'input[name="Price"]', message: 'Price is required' },
+                { field: 'input[name="QuantityAvailable"]', message: 'Stock quantity is required' },
+                { field: 'select[name="Unit"]', message: 'Please select a unit' }
+            ];
+
+            requiredFields.forEach(function(item) {
+                const field = $(item.field);
+                if (!field.val() || field.val() === '') {
+                    isValid = false;
+                    field.addClass('is-invalid');
+                    showValidationError(item.message);
+                }
+            });
+
+            // Validate price
+            const price = parseFloat($('input[name="Price"]').val());
+            if (price <= 0) {
+                isValid = false;
+                $('input[name="Price"]').addClass('is-invalid');
+                showValidationError('Price must be greater than 0');
+            }
+
+            // Validate quantity
+            const quantity = parseInt($('input[name="QuantityAvailable"]').val());
+            if (quantity < 1) {
+                isValid = false;
+                $('input[name="QuantityAvailable"]').addClass('is-invalid');
+                showValidationError('Stock quantity must be at least 1');
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                return false;
+            }
+
+            // Show loading state
+            $('#submitBtn').html('<i class="fas fa-spinner fa-spin"></i> Adding Product...').prop('disabled', true);
+            
+            console.log('Form validation passed, submitting...');
+            return true;
+        });
+
+        function showValidationError(message) {
+            console.error('Validation error:', message);
+            
+            // Remove existing error alerts
+            $('.alert-danger').not('[asp-validation-summary]').remove();
+            
+            // Add error alert
+            const errorHtml = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            $('.card-body').prepend(errorHtml);
+            
+            // Auto-hide after 5 seconds
+            setTimeout(function() {
+                $('.alert-danger').not('[asp-validation-summary]').fadeOut();
+            }, 5000);
+        }
+
+        // Real-time price formatting
+        $('input[name="Price"]').on('input', function() {
+            let value = $(this).val();
+            if (value) {
+                $(this).siblings('.price-display').remove();
+                $(this).parent().append(`<small class="text-muted price-display">₹${parseFloat(value).toFixed(2)}</small>`);
+            }
+        });
+
+        // Debug form data on submission
+        $('#productForm').on('submit', function(e) {
+            console.log('Form data:');
+            const formData = new FormData(this);
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+        });
+    </script>
+}

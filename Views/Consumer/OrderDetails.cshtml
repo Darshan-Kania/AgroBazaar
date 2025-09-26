@@ -1,0 +1,276 @@
+@model AgroBazaar.Models.Entities.Order
+
+@{
+    ViewData["Title"] = $"Order Details - {Model.OrderNumber}";
+    var userRatings = ViewBag.UserRatings as Dictionary<int, AgroBazaar.Models.Entities.ProductRating> ?? new Dictionary<int, AgroBazaar.Models.Entities.ProductRating>();
+    var isDelivered = Model.Status == "Delivered";
+}
+
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Dashboard">Dashboard</a></li>
+                <li class="breadcrumb-item"><a asp-action="Orders">My Orders</a></li>
+                <li class="breadcrumb-item active">Order #@Model.OrderNumber</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Order Status -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Order Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>Order #@Model.OrderNumber</h4>
+                    <span class="badge bg-@(Model.Status == "Delivered" ? "success" : Model.Status == "Shipped" ? "info" : Model.Status == "Processing" ? "warning" : "secondary") fs-6">
+                        @Model.Status
+                    </span>
+                </div>
+                
+                <!-- Order Timeline -->
+                <div class="timeline">
+                    <div class="timeline-item @(Model.Status != "Cancelled" ? "completed" : "")">
+                        <div class="timeline-marker bg-success"></div>
+                        <div class="timeline-content">
+                            <h6>Order Placed</h6>
+                            <small class="text-muted">@Model.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item @(Model.Status == "Processing" || Model.Status == "Shipped" || Model.Status == "Delivered" ? "completed" : "")">
+                        <div class="timeline-marker @(Model.Status == "Processing" || Model.Status == "Shipped" || Model.Status == "Delivered" ? "bg-success" : "bg-secondary")"></div>
+                        <div class="timeline-content">
+                            <h6>Order Processing</h6>
+                            <small class="text-muted">Preparing your fresh products</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item @(Model.Status == "Shipped" || Model.Status == "Delivered" ? "completed" : "")">
+                        <div class="timeline-marker @(Model.Status == "Shipped" || Model.Status == "Delivered" ? "bg-success" : "bg-secondary")"></div>
+                        <div class="timeline-content">
+                            <h6>Order Shipped</h6>
+                            <small class="text-muted">On the way to your address</small>
+                        </div>
+                    </div>
+                    <div class="timeline-item @(Model.Status == "Delivered" ? "completed" : "")">
+                        <div class="timeline-marker @(Model.Status == "Delivered" ? "bg-success" : "bg-secondary")"></div>
+                        <div class="timeline-content">
+                            <h6>Order Delivered</h6>
+                            <small class="text-muted">Enjoy your fresh products!</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-box"></i> Order Items (@Model.OrderItems.Count())</h5>
+            </div>
+            <div class="card-body p-0">
+                @foreach (var item in Model.OrderItems)
+                {
+                    var existing = userRatings.ContainsKey(item.ProductId) ? userRatings[item.ProductId] : null;
+                    <div class="border-bottom p-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                @if (!string.IsNullOrEmpty(item.Product.ImageUrl))
+                                {
+                                    <img src="@item.Product.ImageUrl" alt="@item.Product.Name" class="img-fluid rounded" style="max-height: 80px; object-fit: cover;">
+                                }
+                                else
+                                {
+                                    <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 80px;">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                }
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="mb-1">@item.Product.Name</h6>
+                                <small class="text-muted">@item.Product.Category.Name</small><br>
+                                <small class="text-muted">By @item.Product.Farmer.FirstName @item.Product.Farmer.LastName</small>
+                            </div>
+                            <div class="col-md-2">
+                                <strong>₹@item.UnitPrice.ToString("N2")</strong><br>
+                                <small class="text-muted">per @item.Product.Unit</small>
+                            </div>
+                            <div class="col-md-2">
+                                <strong>@item.Quantity @item.Product.Unit</strong>
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <strong class="text-success">₹@item.TotalPrice.ToString("N2")</strong>
+                            </div>
+                        </div>
+
+                        @if (isDelivered)
+                        {
+                            <div class="mt-3">
+                                @if (existing != null)
+                                {
+                                    <div class="alert alert-light border d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <span class="badge bg-warning text-dark me-2">@existing.Rating <i class="fas fa-star"></i></span>
+                                            <small class="text-muted">Your review on @existing.CreatedAt.ToString("dd MMM yyyy")</small>
+                                            @if (!string.IsNullOrEmpty(existing.Comment))
+                                            {
+                                                <div class="small mt-1">@existing.Comment</div>
+                                            }
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#edit-rating-@item.ProductId">Edit</button>
+                                    </div>
+                                    <div class="collapse" id="edit-rating-@item.ProductId">
+                                        <form asp-action="RateProduct" method="post" class="row g-2">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="productId" value="@item.ProductId" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                            <div class="col-auto">
+                                                <select name="rating" class="form-select form-select-sm">
+                                                    @for (int i = 5; i >= 1; i--)
+                                                    {
+                                                        <option value="@i" selected="@(existing?.Rating == i)">@i</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                            <div class="col">
+                                                <input type="text" name="comment" class="form-control form-control-sm" value="@existing?.Comment" placeholder="Update comment (optional)">
+                                            </div>
+                                            <div class="col-auto">
+                                                <button class="btn btn-sm btn-warning" type="submit"><i class="fas fa-paper-plane"></i> Update</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <form asp-action="RateProduct" method="post" class="row g-2">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="productId" value="@item.ProductId" />
+                                        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                        <div class="col-auto">
+                                            <select name="rating" class="form-select form-select-sm">
+                                                @for (int i = 5; i >= 1; i--)
+                                                {
+                                                    <option value="@i">@i</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col">
+                                            <input type="text" name="comment" class="form-control form-control-sm" placeholder="Write a comment (optional)">
+                                        </div>
+                                        <div class="col-auto">
+                                            <button class="btn btn-sm btn-warning" type="submit"><i class="fas fa-paper-plane"></i> Rate</button>
+                                        </div>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Order Summary -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-receipt"></i> Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal:</span>
+                    <strong>₹@Model.TotalAmount.ToString("N2")</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Delivery:</span>
+                    <span class="text-success">Free</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tax:</span>
+                    <span>Included</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-3">
+                    <strong>Total Amount:</strong>
+                    <strong class="text-success">₹@Model.TotalAmount.ToString("N2")</strong>
+                </div>
+
+                <div class="d-grid gap-2">
+                    @if (Model.Status == "Pending")
+                    {
+                        <button class="btn btn-outline-danger" onclick="cancelOrder(@Model.Id)">
+                            <i class="fas fa-times"></i> Cancel Order
+                        </button>
+                    }
+                    @if (Model.Status == "Delivered")
+                    {
+                        <a class="btn btn-outline-secondary" asp-action="Invoice" asp-route-orderNumber="@Model.OrderNumber" target="_blank">
+                            <i class="fas fa-file-invoice"></i> View Invoice
+                        </a>
+                    }
+                    <button class="btn btn-outline-secondary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print Order
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delivery Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-truck"></i> Delivery Details</h5>
+            </div>
+            <div class="card-body">
+                <h6>Delivery Address</h6>
+                <p class="text-muted">@Model.DeliveryAddress</p>
+                
+                <h6>Payment Method</h6>
+                <p class="mb-1">@Model.PaymentMethod</p>
+                <span class="badge bg-@(Model.PaymentStatus == "Paid" ? "success" : "warning")">@Model.PaymentStatus</span>
+            </div>
+        </div>
+
+        <!-- Support -->
+        <div class="card">
+            <div class="card-body">
+                <h6><i class="fas fa-headset text-success"></i> Need Help?</h6>
+                <ul class="list-unstyled mb-0 small">
+                    <li><i class="fas fa-phone text-success"></i> Call: +91-XXXXXXXXXX</li>
+                    <li><i class="fas fa-envelope text-success"></i> Email: support@agrobazaar.com</li>
+                    <li><i class="fas fa-clock text-success"></i> Support: 9 AM - 6 PM</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function cancelOrder(orderId) {
+            if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+                alert('Order cancellation feature will be implemented soon.');
+            }
+        }
+    </script>
+}
+
+<style>
+    .timeline { position: relative; padding-left: 30px; }
+    .timeline::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: #dee2e6; }
+    .timeline-item { position: relative; margin-bottom: 20px; }
+    .timeline-marker { position: absolute; left: -18px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #dee2e6; }
+    .timeline-item.completed .timeline-marker { box-shadow: 0 0 0 2px #28a745; }
+    .timeline-content h6 { margin-bottom: 5px; color: #495057; }
+    .timeline-item.completed .timeline-content h6 { color: #28a745; font-weight: 600; }
+</style>
+
+<style media="print">
+    .btn, .breadcrumb, .card-header { display: none !important; }
+    .card { border: none !important; box-shadow: none !important; }
+    .col-lg-4 .card:not(:first-child) { display: none !important; }
+</style>
