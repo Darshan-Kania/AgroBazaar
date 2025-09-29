@@ -4,6 +4,8 @@
     ViewData["Title"] = "My Orders - AgroBazaar";
 }
 
+@Html.AntiForgeryToken()
+
 <div class="row">
     <div class="col-12">
         <h2><i class="fas fa-shopping-bag text-success"></i> My Orders</h2>
@@ -26,7 +28,7 @@
                                 <small class="text-muted">@order.OrderDate.ToString("dd MMM yyyy")</small>
                             </div>
                             <div class="col-md-2">
-                                <span class="badge bg-@(order.Status == "Delivered" ? "success" : order.Status == "Shipped" ? "info" : order.Status == "Processing" ? "warning" : "secondary")">
+                                <span class="badge bg-@(order.Status == "Delivered" ? "success" : order.Status == "Shipped" ? "info" : order.Status == "Processing" ? "warning" : order.Status == "Cancelled" ? "danger" : "secondary")">
                                     @order.Status
                                 </span>
                             </div>
@@ -37,7 +39,7 @@
                                 <a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-outline-primary btn-sm">
                                     <i class="fas fa-eye"></i> View Details
                                 </a>
-                                @if (order.Status == "Pending")
+                                @if (order.Status == "Pending" || order.Status == "Processing")
                                 {
                                     <button class="btn btn-outline-danger btn-sm" onclick="cancelOrder(@order.Id)">
                                         <i class="fas fa-times"></i> Cancel
@@ -86,7 +88,7 @@
                                     </div>
                                     <div class="col-6">
                                         <small class="text-muted">Status:</small><br>
-                                        <small class="badge bg-@(order.PaymentStatus == "Paid" ? "success" : "warning")">@order.PaymentStatus</small>
+                                        <small class="badge bg-@(order.PaymentStatus == "Paid" ? "success" : order.PaymentStatus == "Cancelled" ? "danger" : "warning")">@order.PaymentStatus</small>
                                     </div>
                                 </div>
                                 @if (order.Status == "Shipped" || order.Status == "Delivered")
@@ -126,10 +128,30 @@ else
 @section Scripts {
     <script>
         function cancelOrder(orderId) {
-            if (confirm('Are you sure you want to cancel this order?')) {
-                // Implementation for order cancellation
-                alert('Order cancellation feature will be implemented soon.');
+            if (!confirm('Are you sure you want to cancel this order?')) {
+                return;
             }
+            var reason = prompt('Please provide a reason for cancellation:');
+            if (reason === null) return; // user cancelled prompt
+            if (!reason.trim()) {
+                alert('Cancellation reason is required.');
+                return;
+            }
+            $.ajax({
+                url: '@Url.Action("CancelOrder", "Consumer")',
+                type: 'POST',
+                data: {
+                    orderId: orderId,
+                    cancellationReason: reason,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function () {
+                    location.reload();
+                },
+                error: function () {
+                    alert('Failed to cancel order. Please try again.');
+                }
+            });
         }
     </script>
 }

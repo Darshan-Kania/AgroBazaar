@@ -24,7 +24,7 @@ namespace AgroBazaar.Models.Entities
         public string PaymentMethod { get; set; } = "COD"; // Cash on Delivery
 
         [StringLength(20)]
-        public string PaymentStatus { get; set; } = "Pending"; // Pending, Paid, Failed
+        public string PaymentStatus { get; set; } = "Pending"; // Pending, Paid, Failed, Cancelled
 
         // Delivery Address
         [Required]

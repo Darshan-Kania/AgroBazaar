@@ -297,42 +297,51 @@ namespace AgroBazaar.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return Json(new { success = false, message = "Please login to cancel orders." });
                 TempData["ErrorMessage"] = "Please login to cancel orders.";
                 return RedirectToAction("Login", "Auth");
             }
 
             try
             {
-                // Verify order belongs to current user
                 var order = await _unitOfWork.Orders.GetWithItemsAsync(orderId);
                 if (order == null || order.CustomerId != userId)
                 {
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        return Json(new { success = false, message = "Order not found or access denied." });
                     TempData["ErrorMessage"] = "Order not found or you don't have permission to cancel this order.";
                     return RedirectToAction(nameof(Orders));
                 }
 
-                // Check if order can be cancelled
                 if (order.Status != "Pending" && order.Status != "Processing")
                 {
-                    TempData["ErrorMessage"] = $"Cannot cancel order. Order is already {order.Status}.";
+                    var msg = $"Cannot cancel order. Order is already {order.Status}.";
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        return Json(new { success = false, message = msg });
+                    TempData["ErrorMessage"] = msg;
                     return RedirectToAction(nameof(OrderDetails), new { id = orderId });
                 }
 
-                // Cancel the order (this will restore product quantities)
                 var success = await _unitOfWork.Orders.CancelOrderAsync(orderId, cancellationReason);
-                
                 if (success)
                 {
                     await _unitOfWork.SaveChangesAsync();
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        return Json(new { success = true, message = "Order cancelled successfully." });
                     TempData["SuccessMessage"] = "Order cancelled successfully. Product quantities have been restored.";
                 }
                 else
                 {
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        return Json(new { success = false, message = "Failed to cancel order. Please try again." });
                     TempData["ErrorMessage"] = "Failed to cancel order. Please try again.";
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return Json(new { success = false, message = "An error occurred while cancelling the order." });
                 TempData["ErrorMessage"] = "An error occurred while cancelling the order. Please try again.";
             }
 

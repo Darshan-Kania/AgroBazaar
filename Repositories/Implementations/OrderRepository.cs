@@ -156,15 +156,17 @@ namespace AgroBazaar.Repositories.Implementations
                     }
                 }
 
-                // Update order status
+                // Update order status & related statuses
                 order.Status = "Cancelled";
+                order.PaymentStatus = "Cancelled"; // keep payment status in sync
+                order.DeliveryDate = null; // ensure no delivery date recorded
                 order.UpdatedAt = DateTime.UtcNow;
-                
+
                 // Add cancellation reason to notes if provided
                 if (!string.IsNullOrEmpty(cancellationReason))
                 {
-                    order.Notes = string.IsNullOrEmpty(order.Notes) 
-                        ? $"Cancelled: {cancellationReason}" 
+                    order.Notes = string.IsNullOrEmpty(order.Notes)
+                        ? $"Cancelled: {cancellationReason}"
                         : $"{order.Notes}\nCancelled: {cancellationReason}";
                 }
 

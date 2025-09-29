@@ -21,6 +21,9 @@
         
         <input type="radio" class="btn-check" name="statusFilter" id="delivered" value="Delivered">
         <label class="btn btn-outline-success" for="delivered">Delivered</label>
+        
+        <input type="radio" class="btn-check" name="statusFilter" id="cancelled" value="Cancelled">
+        <label class="btn btn-outline-danger" for="cancelled">Cancelled</label>
     </div>
 </div>
 
@@ -40,7 +43,7 @@
                                 <small class="text-muted">@order.OrderDate.ToString("dd MMM yyyy")</small>
                             </div>
                             <div class="col-md-2">
-                                <span class="badge bg-@(order.Status == "Delivered" ? "success" : order.Status == "Shipped" ? "info" : order.Status == "Processing" ? "warning" : "secondary") status-badge" id="status-@order.Id">
+                                <span class="badge bg-@(order.Status == "Delivered" ? "success" : order.Status == "Shipped" ? "info" : order.Status == "Processing" ? "warning" : order.Status == "Cancelled" ? "danger" : "secondary") status-badge" id="status-@order.Id">
                                     @order.Status
                                 </span>
                             </div>
@@ -122,7 +125,7 @@
                                     <div class="col-6">
                                         <small class="text-muted">Payment:</small><br>
                                         <small>@order.PaymentMethod</small><br>
-                                        <small class="badge bg-@(order.PaymentStatus == "Paid" ? "success" : "warning")">@order.PaymentStatus</small>
+                                        <small class="badge bg-@(order.PaymentStatus == "Paid" ? "success" : order.PaymentStatus == "Cancelled" ? "danger" : "warning")">@order.PaymentStatus</small>
                                     </div>
                                     <div class="col-6">
                                         <small class="text-muted">Delivery Address:</small><br>
@@ -186,7 +189,7 @@ else
                         if (response.success) {
                             // Update status badge
                             const statusBadge = $('#status-' + orderId);
-                            statusBadge.removeClass().addClass('badge bg-' + getStatusClass(newStatus)).text(newStatus);
+                            statusBadge.removeClass().addClass('badge bg-' + getStatusClass(newStatus) + ' status-badge').text(newStatus);
                             
                             // Update order card data attribute
                             statusBadge.closest('.order-card').attr('data-status', newStatus);
@@ -213,6 +216,7 @@ else
                 case 'Delivered': return 'success';
                 case 'Shipped': return 'info';
                 case 'Processing': return 'warning';
+                case 'Cancelled': return 'danger';
                 default: return 'secondary';
             }
         }
