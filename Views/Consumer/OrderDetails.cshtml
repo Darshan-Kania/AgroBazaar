@@ -6,6 +6,9 @@
     var isDelivered = Model.Status == "Delivered";
 }
 
+<!-- Add antiforgery token for AJAX requests -->
+@Html.AntiForgeryToken()
+
 <div class="row">
     <div class="col-12">
         <nav aria-label="breadcrumb">
@@ -28,9 +31,17 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4>Order #@Model.OrderNumber</h4>
-                    <span class="badge bg-@(Model.Status == "Delivered" ? "success" : Model.Status == "Shipped" ? "info" : Model.Status == "Processing" ? "warning" : "secondary") fs-6">
-                        @Model.Status
-                    </span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-@(Model.Status == "Delivered" ? "success" : Model.Status == "Shipped" ? "info" : Model.Status == "Processing" ? "warning" : Model.Status == "Cancelled" ? "danger" : "secondary") fs-6">
+                            @Model.Status
+                        </span>
+                        @if (Model.Status == "Pending" || Model.Status == "Processing")
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+                                <i class="fas fa-times"></i> Cancel Order
+                            </button>
+                        }
+                    </div>
                 </div>
                 
                 <!-- Order Timeline -->
@@ -63,6 +74,16 @@
                             <small class="text-muted">Enjoy your fresh products!</small>
                         </div>
                     </div>
+                    @if (Model.Status == "Cancelled")
+                    {
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-danger"></div>
+                            <div class="timeline-content">
+                                <h6 class="text-danger">Order Cancelled</h6>
+                                <small class="text-muted">@(Model.UpdatedAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "Recently cancelled")</small>
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -201,12 +222,6 @@
                 </div>
 
                 <div class="d-grid gap-2">
-                    @if (Model.Status == "Pending")
-                    {
-                        <button class="btn btn-outline-danger" onclick="cancelOrder(@Model.Id)">
-                            <i class="fas fa-times"></i> Cancel Order
-                        </button>
-                    }
                     @if (Model.Status == "Delivered")
                     {
                         <a class="btn btn-outline-secondary" asp-action="Invoice" asp-route-orderNumber="@Model.OrderNumber" target="_blank">
@@ -249,28 +264,126 @@
     </div>
 </div>
 
+<!-- Cancel Order Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelOrderModalLabel">Cancel Order #@Model.OrderNumber</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel this order? This action cannot be undone.</p>
+                <form asp-action="CancelOrder" method="post" id="cancelOrderForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="orderId" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label for="cancellationReason" class="form-label">Reason for Cancellation</label>
+                        <textarea class="form-control" id="cancellationReason" name="cancellationReason" rows="3" placeholder="Please provide a reason for cancellation..." required></textarea>
+                    </div>
+                    <div class="alert alert-info small" role="alert">
+                        <i class="fas fa-info-circle"></i> Your product quantities will be automatically restored to inventory after cancellation.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-times"></i> Yes, Cancel Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
-        function cancelOrder(orderId) {
-            if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
-                alert('Order cancellation feature will be implemented soon.');
-            }
+        // Handle cancel order form submission
+        $(document).ready(function() {
+            $('#cancelOrderForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                var reason = $('#cancellationReason').val().trim();
+                if (!reason) {
+                    alert('Please provide a reason for cancellation.');
+                    return false;
+                }
+                
+                if (confirm('Are you sure you want to cancel this order? This action cannot be undone and your product quantities will be restored to inventory.')) {
+                    // Submit the form
+                    this.submit();
+                }
+            });
+        });
+        
+        // Show alert messages
+        function showAlert(type, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            $('.alert:not(.alert-success):not(.alert-info)').remove();
+            $('.breadcrumb').after(alertHtml);
+            
+            setTimeout(function() {
+                $('.alert-success:last, .alert-danger:last').fadeOut();
+            }, 5000);
         }
     </script>
 }
 
 <style>
-    .timeline { position: relative; padding-left: 30px; }
-    .timeline::before { content: ''; position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: #dee2e6; }
-    .timeline-item { position: relative; margin-bottom: 20px; }
-    .timeline-marker { position: absolute; left: -18px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #dee2e6; }
-    .timeline-item.completed .timeline-marker { box-shadow: 0 0 0 2px #28a745; }
-    .timeline-content h6 { margin-bottom: 5px; color: #495057; }
-    .timeline-item.completed .timeline-content h6 { color: #28a745; font-weight: 600; }
+    .timeline { 
+        position: relative; 
+        padding-left: 30px; 
+    }
+    .timeline::before { 
+        content: ''; 
+        position: absolute; 
+        left: 12px; 
+        top: 0; 
+        bottom: 0; 
+        width: 2px; 
+        background: #dee2e6; 
+    }
+    .timeline-item { 
+        position: relative; 
+        margin-bottom: 20px; 
+    }
+    .timeline-marker { 
+        position: absolute; 
+        left: -18px; 
+        width: 12px; 
+        height: 12px; 
+        border-radius: 50%; 
+        border: 2px solid #fff; 
+        box-shadow: 0 0 0 2px #dee2e6; 
+    }
+    .timeline-item.completed .timeline-marker { 
+        box-shadow: 0 0 0 2px #28a745; 
+    }
+    .timeline-content h6 { 
+        margin-bottom: 5px; 
+        color: #495057; 
+    }
+    .timeline-item.completed .timeline-content h6 { 
+        color: #28a745; 
+        font-weight: 600; 
+    }
 </style>
 
 <style media="print">
-    .btn, .breadcrumb, .card-header { display: none !important; }
-    .card { border: none !important; box-shadow: none !important; }
-    .col-lg-4 .card:not(:first-child) { display: none !important; }
+    .btn, .breadcrumb, .card-header { 
+        display: none !important; 
+    }
+    .card { 
+        border: none !important; 
+        box-shadow: none !important; 
+    }
+    .col-lg-4 .card:not(:first-child) { 
+        display: none !important; 
+    }
 </style>

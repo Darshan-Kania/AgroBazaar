@@ -18,6 +18,7 @@ namespace AgroBazaar.Controllers
 
         public async Task<IActionResult> Dashboard()
         {
+            // Removed negotiation expiration (repository not implemented)
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
@@ -289,6 +290,55 @@ namespace AgroBazaar.Controllers
             return View(order);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelOrder(int orderId, string? cancellationReason = null)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["ErrorMessage"] = "Please login to cancel orders.";
+                return RedirectToAction("Login", "Auth");
+            }
+
+            try
+            {
+                // Verify order belongs to current user
+                var order = await _unitOfWork.Orders.GetWithItemsAsync(orderId);
+                if (order == null || order.CustomerId != userId)
+                {
+                    TempData["ErrorMessage"] = "Order not found or you don't have permission to cancel this order.";
+                    return RedirectToAction(nameof(Orders));
+                }
+
+                // Check if order can be cancelled
+                if (order.Status != "Pending" && order.Status != "Processing")
+                {
+                    TempData["ErrorMessage"] = $"Cannot cancel order. Order is already {order.Status}.";
+                    return RedirectToAction(nameof(OrderDetails), new { id = orderId });
+                }
+
+                // Cancel the order (this will restore product quantities)
+                var success = await _unitOfWork.Orders.CancelOrderAsync(orderId, cancellationReason);
+                
+                if (success)
+                {
+                    await _unitOfWork.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Order cancelled successfully. Product quantities have been restored.";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Failed to cancel order. Please try again.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An error occurred while cancelling the order. Please try again.";
+            }
+
+            return RedirectToAction(nameof(OrderDetails), new { id = orderId });
+        }
+
         [HttpGet]
         public async Task<IActionResult> Invoice(string orderNumber)
         {
@@ -470,3 +520,4 @@ namespace AgroBazaar.Controllers
         }
     }
 }
+

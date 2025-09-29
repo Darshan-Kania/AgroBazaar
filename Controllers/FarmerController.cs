@@ -21,6 +21,7 @@ namespace AgroBazaar.Controllers
 
         public async Task<IActionResult> Dashboard()
         {
+            // Removed negotiation expiration (repository not implemented)
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
@@ -393,14 +394,53 @@ namespace AgroBazaar.Controllers
             }
         }
 
-        public IActionResult Inventory()
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelOrder(int orderId, string? cancellationReason = null)
         {
-            return View();
-        }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "Authentication required." });
+            }
 
-        public IActionResult PaymentHistory()
-        {
-            return View();
+            try
+            {
+                // Verify order contains farmer's products
+                var order = await _unitOfWork.Orders.GetWithItemsAsync(orderId);
+                if (order == null || !order.OrderItems.Any(oi => oi.Product.FarmerId == userId))
+                {
+                    return Json(new { success = false, message = "Order not found or you don't have permission to cancel this order." });
+                }
+
+                // Check if order can be cancelled
+                if (order.Status != "Pending" && order.Status != "Processing")
+                {
+                    return Json(new { success = false, message = $"Cannot cancel order. Order is already {order.Status}." });
+                }
+
+                // Cancel the order (this will restore product quantities)
+                var success = await _unitOfWork.Orders.CancelOrderAsync(orderId, cancellationReason);
+                
+                if (success)
+                {
+                    await _unitOfWork.SaveChangesAsync();
+                    return Json(new { 
+                        success = true, 
+                        message = "Order cancelled successfully. Product quantities have been restored.",
+                        newStatus = "Cancelled"
+                    });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Failed to cancel order. Please try again." });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error cancelling order {OrderId}", orderId);
+                return Json(new { success = false, message = "An error occurred while cancelling the order. Please try again." });
+            }
         }
 
         [HttpGet]
@@ -419,6 +459,17 @@ namespace AgroBazaar.Controllers
             ViewBag.FarmerItems = farmerItems;
             ViewBag.FarmerTotal = farmerItems.Sum(i => i.TotalPrice);
             return View(order);
+        }
+
+
+        public IActionResult Inventory()
+        {
+            return View();
+        }
+
+        public IActionResult PaymentHistory()
+        {
+            return View();
         }
     }
 }

@@ -127,5 +127,53 @@ namespace AgroBazaar.Repositories.Implementations
             var orderCount = (lastOrder?.Id ?? 0) + 1;
             return $"ORD{DateTime.UtcNow:yyyyMMdd}{orderCount:D6}";
         }
+
+        public async Task<bool> CancelOrderAsync(int orderId, string? cancellationReason = null)
+        {
+            try
+            {
+                // Get order with items
+                var order = await _dbSet
+                    .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                    .FirstOrDefaultAsync(o => o.Id == orderId);
+
+                if (order == null)
+                    return false;
+
+                // Check if order can be cancelled (only Pending and Processing orders can be cancelled)
+                if (order.Status != "Pending" && order.Status != "Processing")
+                    return false;
+
+                // Restore product quantities
+                foreach (var orderItem in order.OrderItems)
+                {
+                    var product = orderItem.Product;
+                    if (product != null)
+                    {
+                        product.QuantityAvailable += orderItem.Quantity;
+                        product.UpdatedAt = DateTime.UtcNow;
+                    }
+                }
+
+                // Update order status
+                order.Status = "Cancelled";
+                order.UpdatedAt = DateTime.UtcNow;
+                
+                // Add cancellation reason to notes if provided
+                if (!string.IsNullOrEmpty(cancellationReason))
+                {
+                    order.Notes = string.IsNullOrEmpty(order.Notes) 
+                        ? $"Cancelled: {cancellationReason}" 
+                        : $"{order.Notes}\nCancelled: {cancellationReason}";
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

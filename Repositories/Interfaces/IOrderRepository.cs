@@ -15,5 +15,6 @@ namespace AgroBazaar.Repositories.Interfaces
         Task<int> GetOrderCountByStatusAsync(string status);
         Task UpdateOrderStatusAsync(int orderId, string newStatus);
         Task<string> GenerateOrderNumberAsync();
+        Task<bool> CancelOrderAsync(int orderId, string? cancellationReason = null);
     }
 }
