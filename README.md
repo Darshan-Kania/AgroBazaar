@@ -20,15 +20,15 @@ A farmer-to-consumer marketplace built with ASP.NET Core 8 MVC, EF Core (MySQL),
 - Razor Views + Bootstrap 5 + jQuery
 
 ## Features (implemented)
-- Authentication: Register, Login, Logout, role-based redirects
-- Profile: view/update details, change password
-- Consumer: products listing, filters, product details, add to cart, cart quantity update/remove, checkout (COD), orders, order details
-- Ratings: add/update rating and comment for purchased products; average rating on details
-- Order tracking: public page to check status by order number
-- Invoice: printable invoice view with order summary and line items
-- Farmer: add/edit/delete products, orders view, status updates
-- UX: alerts, badges, breadcrumbs, responsive layout
-- Security: antiforgery for forms/AJAX, cookie/session hardening
+- Authentication: Register, Login, Logout, role-based redirects (BOTH)
+- Profile: view/update details, change password (BOTH)
+- Consumer: products listing, filters, product details, add to cart, cart quantity update/remove, checkout (COD), orders, order details (DK)
+- Ratings: add/update rating and comment for purchased products; average rating on details (MP)
+- Order tracking: public page to check status by order number (DK)
+- Invoice: printable invoice view with order summary and line items (AI)
+- Farmer: add/edit/delete products, orders view, status updates (MP)
+- UX: alerts, badges, breadcrumbs, responsive layout (AI but Reviewed by Us Before Merge)
+- Security: antiforgery for forms/AJAX, cookie/session hardening (Research with AI implemented by US with Help of AI)
 
 ## Quick start
 1) Update appsettings for MySQL connection and JWT settings.
