@@ -32,12 +32,17 @@ namespace AgroBazaar.Controllers
             var products = await _unitOfWork.Products.GetByFarmerIdAsync(userId);
             var totalProducts = products.Count();
             var activeProducts = products.Count(p => p.IsActive && p.QuantityAvailable > 0);
-
+            var lowStockProducts = products.Distinct()
+                                           .Where(p => p.QuantityAvailable <= 5)
+                                           .ToList();
+            var productUnits = products.Select(p => p.Unit).Distinct().ToList();
             // Get farmer's orders
             var orders = await _unitOfWork.Orders.GetOrdersForFarmerAsync(userId);
             var totalOrders = orders.Count();
             var pendingOrders = orders.Count(o => o.Status == "Pending");
 
+            // Recent orders (last 5)
+            var recentOrders = orders.OrderByDescending(o => o.OrderDate).Take(5).ToList();
             // Calculate total revenue
             var totalRevenue = await _unitOfWork.Orders.GetTotalSalesByFarmerAsync(userId);
 
@@ -47,8 +52,9 @@ namespace AgroBazaar.Controllers
             ViewBag.PendingOrders = pendingOrders;
             ViewBag.TotalRevenue = totalRevenue;
             ViewBag.UserName = $"{User.FindFirst("FirstName")?.Value} {User.FindFirst("LastName")?.Value}";
-
-            return View();
+            ViewBag.LowStockProducts = lowStockProducts;
+            ViewBag.productUnits = productUnits;
+            return View(recentOrders);
         }
 
         public async Task<IActionResult> Products()

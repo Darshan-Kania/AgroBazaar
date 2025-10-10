@@ -1,3 +1,5 @@
+@model List<AgroBazaar.Models.Entities.Order>
+
 @{
     ViewData["Title"] = "Farmer Dashboard - AgroBazaar";
 }
@@ -12,12 +14,18 @@
                     <i class="fas fa-user"></i> Account
                 </button>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" asp-controller="Auth" asp-action="Profile"><i class="fas fa-user-edit"></i> Profile</a></li>
-                    <li><a class="dropdown-item" asp-controller="Auth" asp-action="ChangePassword"><i class="fas fa-key"></i> Change Password</a></li>
-                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" asp-controller="Auth" asp-action="Profile"><i
+                                class="fas fa-user-edit"></i> Profile</a></li>
+                    <li><a class="dropdown-item" asp-controller="Auth" asp-action="ChangePassword"><i
+                                class="fas fa-key"></i> Change Password</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
                     <li>
                         <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
-                            <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                            <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt"></i>
+                                Logout
+                            </button>
                         </form>
                     </li>
                 </ul>
@@ -149,11 +157,44 @@
                 <h5><i class="fas fa-clock"></i> Recent Orders</h5>
             </div>
             <div class="card-body">
-                <div class="text-center text-muted">
-                    <i class="fas fa-inbox fa-3x mb-3"></i>
-                    <p>No recent orders to display</p>
-                    <small>Orders will appear here when customers place them</small>
-                </div>
+                @if (Model.Count > 0)
+                {
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var order in Model)
+                        {
+                            var orderItems = (order.OrderItems as IEnumerable<AgroBazaar.Models.Entities.OrderItem>)?.ToList() ?? new List<AgroBazaar.Models.Entities.OrderItem>();
+                            var firstItem = orderItems.FirstOrDefault();
+                            var farmerItems = orderItems.Where(oi => oi.Product.FarmerId == firstItem?.Product.FarmerId).ToList();
+                            var farmerTotal = farmerItems.Sum(oi => oi.TotalPrice);
+                            <tr>
+                                <td><a asp-action="OrderDetails" asp-route-id="@order.Id">#@order.Id</a></td>
+                                <td>@order.OrderDate.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                <td><span class="badge bg-secondary">@order.Status</span></td>
+                                <td>₹@farmerTotal.ToString("N0")</td>
+                                <td><a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-sm btn-outline-info">Details</a></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="text-center text-muted">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>No recent orders to display</p>
+                        <small>Orders will appear here when customers place them</small>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -163,11 +204,26 @@
                 <h5><i class="fas fa-exclamation-triangle"></i> Low Stock Alerts</h5>
             </div>
             <div class="card-body">
-                <div class="text-center text-muted">
-                    <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
-                    <p>All products are well stocked</p>
-                    <small>Low stock products will appear here</small>
-                </div>
+                @if (ViewBag.LowStockProducts != null && ViewBag.LowStockProducts.Count > 0)
+                {
+                    <ul class="list-group">
+                        @foreach (var product in ViewBag.LowStockProducts)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                @product.Name
+                                <span class="badge bg-danger rounded-pill">Only @product.QuantityAvailable @product.Unit
+                                    left</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="text-center text-muted">
+                        <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                        <p>All products are well stocked</p>
+                    </div>
+                }
             </div>
         </div>
     </div>
