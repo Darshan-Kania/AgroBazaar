@@ -91,14 +91,6 @@
                                         <small class="badge bg-@(order.PaymentStatus == "Paid" ? "success" : order.PaymentStatus == "Cancelled" ? "danger" : "warning")">@order.PaymentStatus</small>
                                     </div>
                                 </div>
-                                @if (order.Status == "Shipped" || order.Status == "Delivered")
-                                {
-                                    <div class="mt-2">
-                                        <button class="btn btn-outline-info btn-sm w-100">
-                                            <i class="fas fa-truck"></i> Track Order
-                                        </button>
-                                    </div>
-                                }
                             </div>
                         </div>
                     </div>
